@@ -18,11 +18,11 @@ from importer import import_csv
 
 Base.metadata.create_all(bind=engine)
 
-CSV_PATH = Path(__file__).parent.parent.parent / "MyLibrary" / "goodreads_library_export.csv"
+CSV_PATH = Path(__file__).parent.parent / "goodreads_library_export.csv"
 
 if not CSV_PATH.exists():
     print(f"ERROR: CSV not found at {CSV_PATH}")
-    print("Make sure your goodreads_library_export.csv is at MyLibrary/goodreads_library_export.csv")
+    print("Make sure your goodreads_library_export.csv is at the project root (kindle-search/)")
     sys.exit(1)
 
 print(f"Reading from: {CSV_PATH}")

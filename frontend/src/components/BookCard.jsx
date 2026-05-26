@@ -41,9 +41,18 @@ function CoverPlaceholder({ title }) {
   );
 }
 
+function getCoverUrl(book) {
+  if (book.cover_url) return book.cover_url;
+  if (book.isbn13) return `https://covers.openlibrary.org/b/isbn/${book.isbn13}-M.jpg`;
+  if (book.isbn) return `https://covers.openlibrary.org/b/isbn/${book.isbn}-M.jpg`;
+  return null;
+}
+
 export default function BookCard({ book, showSimilarity = false }) {
   const [expanded, setExpanded] = useState(false);
   const [imgError, setImgError] = useState(false);
+
+  const coverUrl = getCoverUrl(book);
 
   const genres = book.genres
     ? book.genres
@@ -61,9 +70,9 @@ export default function BookCard({ book, showSimilarity = false }) {
       {/* Cover */}
       <div className="relative w-full" style={{ paddingTop: "140%" }}>
         <div className="absolute inset-0">
-          {book.cover_url && !imgError ? (
+          {coverUrl && !imgError ? (
             <img
-              src={book.cover_url}
+              src={coverUrl}
               alt={book.title}
               className="w-full h-full object-cover"
               onError={() => setImgError(true)}
@@ -124,7 +133,7 @@ export default function BookCard({ book, showSimilarity = false }) {
         )}
 
         {!book.description && (
-          <p className="text-xs text-gray-600 italic">No description available</p>
+          <p className="text-xs text-amber-700 italic">Description coming soon</p>
         )}
       </div>
     </div>
