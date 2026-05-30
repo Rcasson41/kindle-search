@@ -23,5 +23,6 @@ class Book(Base):
     date_read = Column(String, nullable=True)
     date_added = Column(String, nullable=True)
     shelf = Column(String, nullable=True)
+    notes = Column(Text, nullable=True)
 
     embedding = Column(JSON, nullable=True)

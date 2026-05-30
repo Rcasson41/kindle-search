@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import SearchBar from "./components/SearchBar";
 import BookGrid from "./components/BookGrid";
 import BookDetail from "./components/BookDetail";
+import Recommendations from "./components/Recommendations";
 
 const SHELVES = [
   { key: null, label: "All" },
@@ -19,6 +20,7 @@ const SORT_OPTIONS = [
 ];
 
 function App() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState("library"); // "library" | "search"
   const [mode, setMode] = useState("text");
   const [searchResults, setSearchResults] = useState([]);
@@ -110,6 +112,12 @@ function App() {
             >
               Search
             </button>
+            <button
+              onClick={() => navigate("/recommendations")}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-400 hover:text-gray-200 transition-colors"
+            >
+              For You
+            </button>
           </div>
         </div>
       </header>
@@ -200,6 +208,7 @@ export default function AppRouter() {
     <Routes>
       <Route path="/" element={<App />} />
       <Route path="/books/:id" element={<BookDetail />} />
+      <Route path="/recommendations" element={<Recommendations />} />
     </Routes>
   );
 }

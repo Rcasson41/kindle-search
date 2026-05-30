@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from pathlib import Path
 import json
+import os
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent / ".env")
 
 from database import engine, get_db, Base
 from models import Book
@@ -45,6 +48,7 @@ def book_to_dict(book: Book, similarity: float | None = None) -> dict:
         "date_read": book.date_read,
         "date_added": book.date_added,
         "shelf": book.shelf,
+        "notes": book.notes,
     }
     if similarity is not None:
         d["similarity"] = round(similarity * 100, 1)
@@ -107,6 +111,8 @@ def get_book(book_id: int, db: Session = Depends(get_db)):
 
 class BookUpdate(BaseModel):
     shelf: Optional[str] = None
+    my_rating: Optional[float] = None
+    notes: Optional[str] = None
 
 
 @app.patch("/books/{book_id}")
@@ -116,8 +122,64 @@ def update_book(book_id: int, payload: BookUpdate, db: Session = Depends(get_db)
         raise HTTPException(status_code=404, detail="Book not found")
     if payload.shelf is not None:
         book.shelf = payload.shelf
+    if payload.my_rating is not None:
+        book.my_rating = payload.my_rating
+    if payload.notes is not None:
+        book.notes = payload.notes
     db.commit()
     return book_to_dict(book)
+
+
+@app.get("/recommendations")
+def recommendations(db: Session = Depends(get_db)):
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=400,
+            detail="GEMINI_API_KEY not set. Start the server with: GEMINI_API_KEY=your_key uvicorn main:app --reload",
+        )
+
+    rated = db.query(Book).filter(
+        (Book.my_rating >= 4) | (Book.notes.isnot(None))
+    ).all()
+
+    if not rated:
+        raise HTTPException(status_code=400, detail="Rate some books first to get recommendations.")
+
+    book_lines = []
+    for b in rated:
+        line = f'- "{b.title}" by {b.author}'
+        if b.my_rating:
+            line += f" (rated {int(b.my_rating)}/5)"
+        if b.notes:
+            line += f" — my notes: {b.notes}"
+        book_lines.append(line)
+
+    prompt = (
+        "I'm building a personal book recommendation system. "
+        "Here are books from my library that I've rated highly or written notes about:\n\n"
+        + "\n".join(book_lines)
+        + "\n\nBased on my reading preferences, recommend exactly 10 books I haven't read yet. "
+        "For each recommendation respond with ONLY a JSON array (no markdown, no code fences) like:\n"
+        '[{"title": "...", "author": "...", "reason": "one sentence why I\'d enjoy it"}, ...]'
+    )
+
+    from google import genai
+    client = genai.Client(api_key=api_key)
+    response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+    text = response.text.strip()
+
+    try:
+        recs = json.loads(text)
+    except json.JSONDecodeError:
+        import re
+        match = re.search(r"\[.*\]", text, re.DOTALL)
+        if match:
+            recs = json.loads(match.group())
+        else:
+            raise HTTPException(status_code=500, detail="Could not parse Gemini response.")
+
+    return recs
 
 
 @app.get("/stats")
