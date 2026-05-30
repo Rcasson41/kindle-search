@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
+import { Routes, Route } from "react-router-dom";
 import SearchBar from "./components/SearchBar";
 import BookGrid from "./components/BookGrid";
+import BookDetail from "./components/BookDetail";
 
 const SHELVES = [
   { key: null, label: "All" },
@@ -16,7 +18,7 @@ const SORT_OPTIONS = [
   { key: "my_rating", label: "My Rating" },
 ];
 
-export default function App() {
+function App() {
   const [tab, setTab] = useState("library"); // "library" | "search"
   const [mode, setMode] = useState("text");
   const [searchResults, setSearchResults] = useState([]);
@@ -190,5 +192,14 @@ export default function App() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function AppRouter() {
+  return (
+    <Routes>
+      <Route path="/" element={<App />} />
+      <Route path="/books/:id" element={<BookDetail />} />
+    </Routes>
   );
 }

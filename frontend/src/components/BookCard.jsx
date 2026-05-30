@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const SHELF_STYLES = {
   read: "bg-emerald-900 text-emerald-300",
@@ -41,38 +42,24 @@ function CoverPlaceholder({ title }) {
   );
 }
 
-function getCoverUrl(book) {
-  if (book.cover_url) return book.cover_url;
-  if (book.isbn13) return `https://covers.openlibrary.org/b/isbn/${book.isbn13}-M.jpg`;
-  if (book.isbn) return `https://covers.openlibrary.org/b/isbn/${book.isbn}-M.jpg`;
-  return null;
-}
-
 export default function BookCard({ book, showSimilarity = false }) {
-  const [expanded, setExpanded] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  const coverUrl = getCoverUrl(book);
-
   const genres = book.genres
-    ? book.genres
-        .split(",")
-        .map((g) => g.trim())
-        .filter(Boolean)
-        .slice(0, 3)
+    ? book.genres.split(",").map((g) => g.trim()).filter(Boolean).slice(0, 3)
     : [];
 
   return (
-    <div
-      className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden flex flex-col cursor-pointer hover:border-gray-600 transition-colors"
-      onClick={() => setExpanded((v) => !v)}
+    <Link
+      to={`/books/${book.id}`}
+      className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden flex flex-col hover:border-gray-600 transition-colors"
     >
       {/* Cover */}
       <div className="relative w-full" style={{ paddingTop: "140%" }}>
         <div className="absolute inset-0">
-          {coverUrl && !imgError ? (
+          {book.cover_url && !imgError ? (
             <img
-              src={coverUrl}
+              src={book.cover_url}
               alt={book.title}
               className="w-full h-full object-cover"
               onError={() => setImgError(true)}
@@ -90,22 +77,14 @@ export default function BookCard({ book, showSimilarity = false }) {
 
       {/* Content */}
       <div className="p-3 flex flex-col gap-1.5 flex-1">
-        <div className="flex items-start justify-between gap-1">
-          <div>
-            <h3 className="text-sm font-semibold text-gray-100 leading-tight line-clamp-2">
-              {book.title}
-            </h3>
-            <p className="text-xs text-gray-400 mt-0.5">{book.author}</p>
-          </div>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-100 leading-tight line-clamp-2">{book.title}</h3>
+          <p className="text-xs text-gray-400 mt-0.5">{book.author}</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           {book.shelf && (
-            <span
-              className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                SHELF_STYLES[book.shelf] || "bg-gray-800 text-gray-400"
-              }`}
-            >
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SHELF_STYLES[book.shelf] || "bg-gray-800 text-gray-400"}`}>
               {SHELF_LABELS[book.shelf] || book.shelf}
             </span>
           )}
@@ -115,27 +94,11 @@ export default function BookCard({ book, showSimilarity = false }) {
         {genres.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {genres.map((g) => (
-              <span key={g} className="text-xs bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded">
-                {g}
-              </span>
+              <span key={g} className="text-xs bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded">{g}</span>
             ))}
           </div>
         )}
-
-        {book.description && (
-          <p
-            className={`text-xs text-gray-400 leading-relaxed ${
-              expanded ? "" : "line-clamp-3"
-            }`}
-          >
-            {book.description}
-          </p>
-        )}
-
-        {!book.description && (
-          <p className="text-xs text-amber-700 italic">Description coming soon</p>
-        )}
       </div>
-    </div>
+    </Link>
   );
 }

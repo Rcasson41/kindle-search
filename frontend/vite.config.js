@@ -8,6 +8,7 @@ export default defineConfig({
       "/search": "http://localhost:8000",
       "/books": "http://localhost:8000",
       "/stats": "http://localhost:8000",
+      "/static": "http://localhost:8000",
     },
   },
 });

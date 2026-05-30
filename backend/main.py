@@ -1,7 +1,10 @@
 from fastapi import FastAPI, Depends, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Optional
+from pathlib import Path
 import json
 
 from database import engine, get_db, Base
@@ -11,6 +14,10 @@ from embeddings import embed, rank_by_similarity
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Kindle Library Search")
+
+_static = Path(__file__).parent / "static"
+if _static.exists():
+    app.mount("/static", StaticFiles(directory=str(_static)), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -95,6 +102,21 @@ def get_book(book_id: int, db: Session = Depends(get_db)):
     book = db.query(Book).filter(Book.id == book_id).first()
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
+    return book_to_dict(book)
+
+
+class BookUpdate(BaseModel):
+    shelf: Optional[str] = None
+
+
+@app.patch("/books/{book_id}")
+def update_book(book_id: int, payload: BookUpdate, db: Session = Depends(get_db)):
+    book = db.query(Book).filter(Book.id == book_id).first()
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    if payload.shelf is not None:
+        book.shelf = payload.shelf
+    db.commit()
     return book_to_dict(book)
 
 
